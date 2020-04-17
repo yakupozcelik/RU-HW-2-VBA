@@ -1,0 +1,126 @@
+Sub Multi_Year_Stock_Data()
+    ' Loop through all sheets
+    
+Dim ws As Worksheet
+    For Each ws In ActiveWorkbook.Worksheets
+    ws.Activate
+        ' To determine the last Row
+        LastRow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+
+        ' Insert Headers
+        Range("I1").Value = "Ticker"
+        Range("J1").Value = "Yearly Change"
+        Range("K1").Value = "Percent Change"
+        Range("L1").Value = "Total Stock Volume"
+        
+        
+        'Declare Variables
+        Dim Open_Price As Double
+        Dim Close_Price As Double
+        Dim Yearly_Change As Double
+        Dim Ticker_Name As String
+        Dim Percent_Change As Double
+        Dim Volume As Double
+        Volume = 0
+        Dim Row As Double
+        Row = 2
+        Dim Column As Integer
+        Column = 1
+        Dim i As Long
+        
+        'Set Initial Open Price
+        Open_Price = Cells(2, Column + 2).Value
+        
+         ' Loop through all ticker symbol
+        
+        For i = 2 To LastRow
+        
+         ' Check to see if we are still within the same ticker symbol, if not:
+         
+            If Cells(i + 1, Column).Value <> Cells(i, Column).Value Then
+                ' Set Ticker name
+                Ticker_Name = Cells(i, Column).Value
+                Cells(Row, Column + 8).Value = Ticker_Name
+                
+                ' Set Close Price
+                Close_Price = Cells(i, Column + 5).Value
+                
+                ' Add Yearly Change
+                Yearly_Change = Close_Price - Open_Price
+                Cells(Row, Column + 9).Value = Yearly_Change
+                
+                ' Add Percent Change
+                If (Open_Price = 0 And Close_Price = 0) Then
+                    Percent_Change = 0
+                ElseIf (Open_Price = 0 And Close_Price <> 0) Then
+                    Percent_Change = 1
+                Else
+                    Percent_Change = Yearly_Change / Open_Price
+                    Cells(Row, Column + 10).Value = Percent_Change
+                    Cells(Row, Column + 10).NumberFormat = "0.00%"
+                End If
+                
+                ' Add Total Stock Volume
+                Volume = Volume + Cells(i, Column + 6).Value
+                Cells(Row, Column + 11).Value = Volume
+                
+                ' Add one to Row
+                Row = Row + 1
+                
+                ' Reset the Open Price
+                Open_Price = Cells(i + 1, Column + 2)
+                
+                ' Reset the Volume Total
+                Volume = 0
+                
+            'if cells are the same ticker
+            Else
+                Volume = Volume + Cells(i, Column + 6).Value
+            End If
+        Next i
+        
+        
+        
+        
+        ' Determine the Last Row of Yearly Change per WS
+        YearlyChange_LastRow = ws.Cells(Rows.Count, Column + 8).End(xlUp).Row
+        
+        ' Set the Cell Colors
+        
+        For j = 2 To YearlyChange_LastRow
+            If (Cells(j, Column + 9).Value > 0 Or Cells(j, Column + 9).Value = 0) Then
+                Cells(j, Column + 9).Interior.ColorIndex = 4
+            ElseIf Cells(j, Column + 9).Value < 0 Then
+                Cells(j, Column + 9).Interior.ColorIndex = 3
+            End If
+        Next j
+        
+        ' Set Greatest % Increase, % Decrease, and Total Volume
+        Cells(2, Column + 14).Value = "Greatest % Increase"
+        Cells(3, Column + 14).Value = "Greatest % Decrease"
+        Cells(4, Column + 14).Value = "Greatest Total Volume"
+        Cells(1, Column + 15).Value = "Ticker"
+        Cells(1, Column + 16).Value = "Value"
+        
+        ' Search rows to find the greatest value and ticker symbols
+        For Z = 2 To YearlyChange_LastRow
+            If Cells(Z, Column + 10).Value = Application.WorksheetFunction.Max(ws.Range("K2:K" & YearlyChange_LastRow)) Then
+                Cells(2, Column + 15).Value = Cells(Z, Column + 8).Value
+                Cells(2, Column + 16).Value = Cells(Z, Column + 10).Value
+                Cells(2, Column + 16).NumberFormat = "0.00%"
+                
+            ElseIf Cells(Z, Column + 10).Value = Application.WorksheetFunction.Min(ws.Range("K2:K" & YearlyChange_LastRow)) Then
+                Cells(3, Column + 15).Value = Cells(Z, Column + 8).Value
+                Cells(3, Column + 16).Value = Cells(Z, Column + 10).Value
+                Cells(3, Column + 16).NumberFormat = "0.00%"
+                
+            ElseIf Cells(Z, Column + 11).Value = Application.WorksheetFunction.Max(ws.Range("L2:L" & YearlyChange_LastRow)) Then
+                Cells(4, Column + 15).Value = Cells(Z, Column + 8).Value
+                Cells(4, Column + 16).Value = Cells(Z, Column + 11).Value
+            End If
+        Next Z
+        
+    Next ws
+        
+End Sub
+
